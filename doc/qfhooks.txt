@@ -1,0 +1,184 @@
+*QFHOOKS*             Quickfix Hooks Plugin for Vim               *qfhooks.txt*
+
+==============================================================================
+CONTENTS                                            *qfhooks-contents*
+
+1. Introduction ....................................... |qfhooks-introduction|
+2. Installation & Setup ............................... |qfhooks-installation|
+3. Commands ........................................... |qfhooks-commands|
+4. Configuration Options .............................. |qfhooks-configuration|
+5. Hook Execution Logic ............................... |qfhooks-hooks|
+6. Error Handling ..................................... |qfhooks-errors|
+7. Enums and Internal Utilities ....................... |qfhooks-internals|
+
+==============================================================================
+
+1. Introduction                                        *qfhooks-introduction*
+
+`qfhooks` is a Vim plugin that enhances the Quickfix list navigation by
+providing hooks that can execute custom logic before and after certain
+Quickfix commands. It also supports fallback commands if the Quickfix list is
+empty or an error occurs during navigation.
+
+==============================================================================
+
+2. Installation & Setup                                *qfhooks-installation*
+
+To use `qfhooks`, add it to your plugin manager or source it manually.
+
+Example with vim-plug:
+
+```vim
+Plug 'kis9a/qfhooks'
+```
+
+Make sure the plugin is loaded only once:
+
+```vim
+if exists('g:loaded_qfhooks')
+  finish
+endif
+let g:loaded_qfhooks = 1
+```
+
+==============================================================================
+
+3. Commands                                             *qfhooks-commands*
+
+The following commands extend the behavior of default Quickfix commands.
+Each command can be executed with a bang (`!`) to modify its behavior.
+
+| Command                | Description                                  |
+|------------------------|----------------------------------------------|
+| `:QFHooksCnext[!]`     | Go to the next Quickfix item or wrap to first. |
+| `:QFHooksCprevious[!]` | Go to the previous Quickfix item or wrap to last. |
+| `:QFHooksCc[!][nr]`    | Jump to the given Quickfix entry or the current line. |
+| `:QFHooksCfirst[!][nr]`| Go to the first Quickfix entry or a specific one. |
+| `:QFHooksClast[!][nr]` | Go to the last Quickfix entry or a specific one. |
+| `:QFHooksCopen[height]`| Open the Quickfix window with optional height. |
+| `:QFHooksCwindow[height]` | Open the Quickfix window if items exist. |
+| `:QFHooksCclose`       | Close the Quickfix window. |
+
+Examples:
+```
+:QFHooksCnext
+:QFHooksCc! 10
+:QFHooksCopen 5
+```
+
+==============================================================================
+
+4. Configuration Options                               *qfhooks-configuration*
+
+The plugin provides several global variables for customization.
+
+| Variable                          | Default          | Description                      |
+|-----------------------------------|------------------|----------------------------------|
+| `g:qfhooks_context_hook_key`      | `'qfhooks'`      | Key to identify context hooks.  |
+| `g:qfhooks_context_hooks`         | `{}`             | Dictionary of context hooks, each containing a list of hook definitions. |
+| `g:qfhooks_title_hooks`           | `{}`             | Dictionary of title hooks, each containing a list of hook definitions. |
+| `g:qfhooks_no_items_error_func`   | `'QfHooksNoItemsErrorFunc'` | Function called when no items are found. |
+| `g:qfhooks_cmds`                  | `['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'copen', 'cwindow', 'cclose']` | List of supported commands. |
+
+To override the default error handler:
+
+```vim
+function! MyCustomErrorHandler()
+  echom "No items in the Quickfix list!"
+endfunction
+
+let g:qfhooks_no_items_error_func = 'MyCustomErrorHandler'
+```
+
+==============================================================================
+
+5. Hook Execution Logic                                  *qfhooks-hooks*
+
+Hooks can be triggered at two stages: `before` and `after` the execution of a command.
+
+| Stage   | Description                               |
+|---------|-------------------------------------------|
+| `before`| Hook is executed before the command runs. |
+| `after` | Hook is executed after the command completes. |
+
+### Context Hooks Example:
+
+```vim
+let g:qfhooks_context_hooks = {
+\ 'example_context': [{
+\   'stage': 'before',
+\   'cmds': ['cnext', 'cc'],
+\   'hook': function('MyHookFunction')
+\ }]}
+```
+
+### Title Hooks Example:
+
+```vim
+let g:qfhooks_title_hooks = {
+\ 'example_title': [{
+\   'stage': 'after',
+\   'cmds': ['copen'],
+\   'hook': function('AnotherHookFunction')
+\ }]}
+```
+
+Each hook definition is wrapped in a **list** to allow multiple hooks for the same context or title.
+
+- **Context Hooks**: Triggered based on the Quickfix context.
+- **Title Hooks**: Triggered based on matching patterns in the Quickfix title.
+
+==============================================================================
+
+6. Error Handling                                        *qfhooks-errors*
+
+The plugin defines a default error handler function:
+
+```vim
+function! QfHooksNoItemsErrorFunc()
+  echom "No items found in Quickfix list."
+endfunction
+```
+
+This function is called when no items are present in the Quickfix list. You can override it by defining a custom function and setting it as `g:qfhooks_no_items_error_func`.
+
+Error cases handled:
+- **E553**: Handled by switching to the fallback command (`cfirst` or `clast`).
+- **E42**: Calls the custom error function when no items exist.
+
+==============================================================================
+
+7. Enums and Internal Utilities                         *qfhooks-internals*
+
+The plugin uses enums to organize and simplify command and stage management.
+
+| Enum Name              | Description                       |
+|------------------------|-----------------------------------|
+| `g:qfhooks_cmds_enum`  | Enum for Quickfix commands.       |
+| `g:qfhooks_stages_enum`| Enum for hook stages.             |
+
+Example of enum definition:
+
+```vim
+let g:qfhooks_cmds_enum = s:qfhooks_enum(['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'copen', 'cwindow', 'cclose'])
+let g:qfhooks_stages_enum = s:qfhooks_enum(['before', 'after'])
+let g:qfhooks_default_stage = g:qfhooks_stages_enum['after']
+```
+
+### Utility Functions
+
+- **`qfhooks#wrap_cmd_bang(cmd, bang)`**  
+  Adds a `!` to the command if `bang` is true.
+
+- **`qfhooks#wrap_around_cmd(cmd, wrap_cmd)`**  
+  Executes the primary command and wraps to a fallback if an error occurs.
+
+- **`qfhooks#execute_hook(cmd, stage)`**  
+  Executes the appropriate hook based on the stage (`before` or `after`).
+
+- **`qfhooks#execute_cmd(cmd)`**  
+  Executes the command and triggers hooks before and after execution.
+
+==============================================================================
+
+ vim:tw=78:ts=8:ft=help:norl:
