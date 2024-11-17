@@ -79,6 +79,7 @@ The plugin provides several global variables for customization.
 | `g:qfhooks_title_hooks`           | `{}`             | Dictionary of title hooks, each containing a list of hook definitions. |
 | `g:qfhooks_no_items_error_func`   | `'QfHooksNoItemsErrorFunc'` | Function called when no items are found. |
 | `g:qfhooks_cmds`                  | `['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'copen', 'cwindow', 'cclose']` | List of supported commands. |
+| `g:qfhooks_default_cmds`           | `['cnext', 'cprevious', 'cc', 'cfirst', 'clast']` | List of default commands. |
 
 To override the default error handler:
 
@@ -167,16 +168,16 @@ let g:qfhooks_default_stage = g:qfhooks_stages_enum['after']
 
 ### Utility Functions
 
-- **`qfhooks#wrap_cmd_bang(cmd, bang)`**  
+- **`qfhooks#wrap_cmd_bang(cmd, bang)`**
   Adds a `!` to the command if `bang` is true.
 
-- **`qfhooks#wrap_around_cmd(cmd, wrap_cmd)`**  
+- **`qfhooks#wrap_around_cmd(cmd, wrap_cmd)`**
   Executes the primary command and wraps to a fallback if an error occurs.
 
-- **`qfhooks#execute_hook(cmd, stage)`**  
+- **`qfhooks#execute_hook(cmd, stage)`**
   Executes the appropriate hook based on the stage (`before` or `after`).
 
-- **`qfhooks#execute_cmd(cmd)`**  
+- **`qfhooks#execute_cmd(cmd)`**
   Executes the command and triggers hooks before and after execution.
 
 ==============================================================================

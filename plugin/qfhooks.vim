@@ -22,6 +22,10 @@ if !exists('g:qfhooks_no_items_error_func')
   let g:qfhooks_no_items_error_func = 'QfHooksNoItemsErrorFunc'
 endif
 
+if !exists('g:qfhooks_default_cmds')
+  let g:qfhooks_default_cmds = ['cnext', 'cprevious', 'cc', 'cfirst', 'clast']
+endif
+
 function! s:qfhooks_enum(items) abort
   let dict = {}
   let index = 0
@@ -34,7 +38,6 @@ endfunction
 
 let g:qfhooks_cmds = ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'copen', 'cwindow', 'cclose']
 let g:qfhooks_cmds_enum = s:qfhooks_enum(g:qfhooks_cmds)
-let g:qfhooks_default_cmds = ['cnext', 'cprevious', 'cc', 'cfirst', 'clast']
 let g:qfhooks_stages = ['before', 'after']
 let g:qfhooks_stages_enum = s:qfhooks_enum(g:qfhooks_stages)
 let g:qfhooks_default_stage = 'after'

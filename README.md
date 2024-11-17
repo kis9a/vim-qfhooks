@@ -127,6 +127,8 @@ Hooks are triggered **before** or **after** commands run. You can create both **
 ### Examples of hook variables
 
 ```vim
+let g:qfhooks_default_cmds = ['cnext', 'cprevious', 'cc', 'cfirst', 'clast']
+
 let g:qfhooks_context_hooks = {
 \ 'context': [{
 \   'stage': 'after',
