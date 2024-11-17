@@ -58,38 +58,35 @@ To overcome these problems, I created **vim-qfhooks**. This plugin displays the 
 Add the following hook configuration to your `.vimrc`:
 
 ```vim
-function s:reviewPR(base)
+function! s:openBaseDiffQf(base)
   let g:review_base = a:base !=# '' ? a:base : 'origin/main'
-  let diff_files = systemlist('git diff --name-status $(git merge-base HEAD ' . g:review_base . ')')
-  let items = []
-  for file in diff_files
-    if !empty(file)
-      let parts = split(file, '\t\+', 1)
+  let l:diff_files = systemlist('git diff --name-status $(git merge-base HEAD ' . g:review_base . ')')
+  let l:items = []
+  for l:file in l:diff_files
+    if !empty(l:file)
+      let parts = split(l:file, '\t\+', 1)
       if len(parts) == 2
-        let [status, filename] = parts
-        call add(items, {'filename': filename, 'lnum': 1, 'text': 'S:' . status})
+        let [l:status, l:filename] = parts
+        call add(l:items, {'filename': l:filename, 'lnum': 1, 'text': 'S:' . l:status})
       endif
     endif
   endfor
-  if empty(items)
-    echo 'No files found in diff for base: ' . g:review_base
-    return
-  endif
+  if empty(l:items) | echo 'No files found in diff for base: ' . g:review_base | return | endif
   call setqflist([], 'r', {
-        \ 'title': 'review_pr: base' . g:review_base,
-        \ 'context': {g:qfhooks_context_hook_key : 'review_pr'},
-        \ 'items': items,
-        \ })
+    \ 'title': 'review_pr: base' . g:review_base,
+    \ 'context': {g:qfhooks_context_hook_key : 'review_pr'},
+    \ 'items': l:items,
+    \ })
   silent! execute 'QFHooksCopen'
 endfunction
 
-function HandleOpenDiff()
+function! HandleOpenBaseDiff()
   silent! cc
   silent! execute 'Gvdiffsplit ' . g:review_base
   silent! wincmd h
 endfunction
 
-function HandleNextDiff()
+function! HandleNextBaseDiff()
   let l:current_bufnr = bufnr('%')
   for l:win in getwininfo()
     if l:win.tabnr == tabpagenr() && l:win.bufnr != l:current_bufnr && l:win.quickfix == 0
@@ -100,21 +97,121 @@ function HandleNextDiff()
   silent! wincmd h
 endfunction
 
-
 let g:qfhooks_context_hooks = {
   \ 'review_pr': [{
-  \    'hook': function('HandleNextDiff'),
+  \    'hook': function('HandleNextBaseDiff'),
   \    'stage': 'after',
   \    'cmds': ['cprevious', 'cnext', 'cc'],
   \   },
   \   {
-  \    'hook': function('HandleOpenDiff'),
+  \    'hook': function('HandleOpenBaseDiff'),
   \    'stage': 'after',
   \    'cmds': ['copen'],
   \   }],
   \ }
 
-command! -nargs=? ReviewPR call s:reviewPR(<q-args>)
+command! -nargs=? ReviewPR call s:openBaseDiffQf(<q-args>)
+```
+
+### Yank history
+
+By integrating with plugins like vim-yoink, you can display your yank history in the Quickfix list and use custom hooks to select and reuse previous yanks effortlessly.
+
+```vim
+" Plug 'kis9a/vim-yoink'
+
+function! s:yankHistoryQf(open = v:false)
+  let l:qf_list = getqflist()
+  let l:qf_info = getqflist({'all': 0})
+  let l:context = type(l:qf_info['context']) == type({}) ? l:qf_info['context'] : {}
+  if !a:open && (!empty(l:qf_list) && (empty(l:context) || get(l:context, g:qfhooks_context_hook_key, '') !=# 'yank_history'))
+    return
+  endif
+
+  let l:items = []
+  let l:idx = 1
+  for l:yank in yoink#getYankHistory()
+    call add(l:items, {'lnum': l:idx, 'text': l:yank['text']})
+    let l:idx += 1
+  endfor
+  if empty(items) | echo 'No yanks in history' | return | endif
+
+  if a:open
+    if empty(l:context) || get(l:context, g:qfhooks_context_hook_key, '') !=# 'yank_history'
+      call setqflist([])
+    endif
+  endif
+
+  call setqflist([], 'r', {
+    \ 'title': 'yank_history',
+    \ 'context': {g:qfhooks_context_hook_key : 'yank_history'},
+    \ 'items': l:items,
+    \ })
+
+  if a:open | silent! execute 'QFHooksCopen' | endif
+endfunction
+
+function! s:yankPrevious()
+  let l:yanks = yoink#getYankHistory()
+  if empty(l:yanks) | echo 'No yanks in history' | return | endif
+  if len(l:yanks) < 1 | return | endif
+  let l:yanked = l:yanks[1]['text']
+  call yoink#manualYank(l:yanked)
+  let l:line = substitute(l:yanked, '\n', '\\n', 'g')
+  if len(l:line) > 60 | let l:line = line[: 60] . '...' | endif
+  echo l:line
+endfunction
+
+function! HandleBeforeOpenYank()
+  if &filetype ==# 'qf'
+    if exists('g:pos_before_yanekd_qf_open')
+      unlet g:pos_before_yanekd_qf_open
+    endif
+  else
+    let g:pos_before_yanekd_qf_open = getpos('.')
+  endif
+endfunction
+
+function! HandleAfterOpenYank()
+  let l:qf_info = getqflist({'idx': 0, 'items': 1})
+  let l:idx = l:qf_info['idx']
+  let l:qflist = l:qf_info['items']
+  if empty(l:qflist) | echo "Quickfix list is empty" | return | endif
+
+  let l:yanked = l:qflist[l:idx-1]['text']
+  let @+ = l:yanked
+  if &filetype ==# 'qf' |
+    cclose
+  else
+    if exists('g:pos_before_yanekd_qf_open')
+      let [_, l:lnum, l:col, _] = g:pos_before_yanekd_qf_open
+      call cursor(l:lnum, l:col)
+    endif
+  endif
+endfunction
+
+let g:qfhooks_context_hooks = {
+  \ 'yank_history': [{
+  \    'hook': function('HandleBeforeOpenYank'),
+  \    'stage': 'before',
+  \   },
+  \   {
+  \    'hook': function('HandleAfterOpenYank'),
+  \    'stage': 'after',
+  \   }],
+  \ }
+
+command! YankHistoryQf call s:yankHistoryQf(v:true)
+command! YankPrevious call s:yankPrevious()
+
+nnoremap <silent> sy :YankHistoryQf<CR>
+nnoremap <silent> yp :YankPrevious<CR>
+
+augroup yoink
+  au!
+  autocmd TextYankPost * call yoink#onYank(copy(v:event)) | call s:yankHistoryQf()
+  autocmd VimEnter * call yoink#onVimEnter()
+augroup END
 ```
 
 ## Hooks System
