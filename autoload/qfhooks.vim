@@ -1,7 +1,8 @@
 function! qfhooks#execute_cmd(cmd) abort
-  call qfhooks#execute_hook(a:cmd, g:qfhooks_stages_enum['before'])
+  let list_type = s:get_list_type(a:cmd)
+  call qfhooks#execute_hook(a:cmd, g:qfhooks_stages_enum['before'], list_type)
   execute a:cmd
-  call qfhooks#execute_hook(a:cmd, g:qfhooks_stages_enum['after'])
+  call qfhooks#execute_hook(a:cmd, g:qfhooks_stages_enum['after'], list_type)
 endfunction
 
 function! qfhooks#wrap_around_cmd(cmd, wrap_cmd) abort
@@ -62,12 +63,70 @@ function! qfhooks#cclose() abort
   call qfhooks#execute_cmd(cmd)
 endfunction
 
-function! s:getPureCommandStr(cmd) abort
+function! qfhooks#lnext(bang) abort
+  let cmd = qfhooks#wrap_cmd_bang('lnext', a:bang)
+  call qfhooks#wrap_around_cmd(cmd, 'lfirst')
+endfunction
+
+function! qfhooks#lprevious(bang) abort
+  let cmd = qfhooks#wrap_cmd_bang('lprevious', a:bang)
+  call qfhooks#wrap_around_cmd(cmd, 'llast')
+endfunction
+
+function! qfhooks#ll(bang, nr) abort
+  let cmd = qfhooks#wrap_cmd_bang('ll', a:bang) . (a:nr ? ' ' . a:nr : line('.'))
+  call qfhooks#execute_cmd(cmd)
+endfunction
+
+function! qfhooks#lfirst(bang, nr) abort
+  let cmd = qfhooks#wrap_cmd_bang('lfirst', a:bang) . (a:nr ? ' ' . a:nr : '')
+  call qfhooks#execute_cmd(cmd)
+endfunction
+
+function! qfhooks#llast(bang, nr) abort
+  let cmd = qfhooks#wrap_cmd_bang('llast', a:bang) . (a:nr ? ' ' . a:nr : '')
+  call qfhooks#execute_cmd(cmd)
+endfunction
+
+function! qfhooks#lopen(height) abort
+  let cmd = 'lopen' . (a:height ? ' ' . a:height : '')
+  call qfhooks#execute_cmd(cmd)
+endfunction
+
+function! qfhooks#lwindow(height) abort
+  let cmd = 'lwindow' . (a:height ? ' ' . a:height : '')
+  call qfhooks#execute_cmd(cmd)
+endfunction
+
+function! qfhooks#lclose() abort
+  let cmd = 'lclose'
+  call qfhooks#execute_cmd(cmd)
+endfunction
+
+function! s:get_cmd_name(cmd) abort
   return substitute(matchstr(a:cmd, '^\S\+'), '!\s*$', '', '')
 endfunction
 
-function! qfhooks#execute_hook(cmd, stage) abort
-  let qf_list = getqflist({'all': 0})
+function! s:get_list_type(cmd) abort
+  let cmd_name = s:get_cmd_name(a:cmd)
+  if cmd_name =~ '^c'
+    return 'qf'
+  elseif cmd_name =~ '^l'
+    return 'loc'
+  else
+    return ''
+  endif
+endfunction
+
+function! qfhooks#execute_hook(cmd, stage, list_type) abort
+  if a:list_type ==# 'qf'
+    let qf_list = getqflist({'all': 0})
+  elseif a:list_type ==# 'loc'
+    let qf_list = getloclist(0, {'all': 0})
+  else
+    return
+  endif
+
   if empty(qf_list)
     return
   endif
@@ -93,7 +152,7 @@ function! qfhooks#execute_hook(cmd, stage) abort
       for hook_info in g:qfhooks_context_hooks[context_key]
         let stage = get(hook_info, 'stage', g:qfhooks_default_stage)
         let cmds = get(hook_info, 'cmds', g:qfhooks_default_cmds)
-        if g:qfhooks_stages_enum[stage] ==# a:stage && index(cmds, s:getPureCommandStr(a:cmd)) != -1
+        if g:qfhooks_stages_enum[stage] ==# a:stage && index(cmds, s:get_cmd_name(a:cmd)) != -1
           call hook_info.hook()
         endif
       endfor
@@ -105,7 +164,7 @@ function! qfhooks#execute_hook(cmd, stage) abort
       for hook_info in g:qfhooks_title_hooks[pattern]
         let stage = get(hook_info, 'stage', g:qfhooks_default_stage)
         let cmds = get(hook_info, 'cmds', g:qfhooks_default_cmds)
-        if g:qfhooks_stages_enum[stage] ==# a:stage && index(cmds, s:getPureCommandStr(a:cmd)) != -1
+        if g:qfhooks_stages_enum[stage] ==# a:stage && index(cmds, s:get_cmd_name(a:cmd)) != -1
           call hook_info.hook()
           break
         endif

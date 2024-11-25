@@ -29,3 +29,35 @@ endfunction
 function! qfhooks#command#qf_hooks_cclose() abort
   call qfhooks#cclose()
 endfunction
+
+function! qfhooks#command#qf_hooks_lnext(bang) abort
+  call qfhooks#lnext(a:bang)
+endfunction
+
+function! qfhooks#command#qf_hooks_lprevious(bang) abort
+  call qfhooks#lprevious(a:bang)
+endfunction
+
+function! qfhooks#command#qf_hooks_ll(bang, ...) abort
+  call qfhooks#ll(a:bang, join(a:000))
+endfunction
+
+function! qfhooks#command#qf_hooks_lfirst(bang, ...) abort
+  call qfhooks#lfirst(a:bang, join(a:000))
+endfunction
+
+function! qfhooks#command#qf_hooks_llast(bang, ...) abort
+  call qfhooks#llast(a:bang, join(a:000))
+endfunction
+
+function! qfhooks#command#qf_hooks_lopen(...) abort
+  call qfhooks#lopen(join(a:000))
+endfunction
+
+function! qfhooks#command#qf_hooks_lwindow(...) abort
+  call qfhooks#lwindow(join(a:000))
+endfunction
+
+function! qfhooks#command#qf_hooks_lclose() abort
+  call qfhooks#lclose()
+endfunction

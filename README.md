@@ -2,9 +2,9 @@
 
 ## Features
 
-- **Extendable Commands**: Adds custom logic around common Quickfix commands (`cnext`, `cprevious`, `cc`, `clast`, etc.).
+- **Extendable Commands**: Adds custom logic around common Quickfix and Location List commands (`cnext`, `cprevious`, `cc`, `clast`, `lnext`, `lprevious`, `ll`, `llast`, etc.).
 - **Hooks System**: Execute custom functions **before** or **after** command execution.
-- **Context and Title Hooks**: Trigger actions based on the Quickfix context or title patterns.
+- **Context and Title Hooks**: Trigger actions based on the Quickfix or Location List context or title patterns.
 
 ## Installation
 
@@ -18,7 +18,9 @@ Plug 'kis9a/vim-qfhooks'
 
 ## Usage
 
-The plugin wraps around native Quickfix commands. Use the enhanced commands the same way, with optional **bang** (`!`) to modify behavior:
+The plugin wraps around native Quickfix and Location List commands. Use the enhanced commands the same way, with optional **bang** (`!`) to modify behavior:
+
+### Quickfix Commands
 
 | Command                   | Description                                    |
 | ------------------------  | ---------------------------------------------- |
@@ -31,16 +33,37 @@ The plugin wraps around native Quickfix commands. Use the enhanced commands the 
 | `:QFHooksCwindow[height]` | Open Quickfix window if items exist.           |
 | `:QFHooksCclose`          | Close the Quickfix window.                     |
 
+### Location List Commands
+
+| Command                   | Description                                        |
+| ------------------------  | -------------------------------------------------- |
+| `:QFHooksLnext[!]`        | Go to the next Location List item or wrap to first. |
+| `:QFHooksLprevious[!]`    | Go to the previous item or wrap to last.           |
+| `:QFHooksLl[!][nr]`       | Jump to the given Location List entry.             |
+| `:QFHooksLfirst[!][nr]`   | Go to the first Location List entry.               |
+| `:QFHooksLlast[!][nr]`    | Go to the last Location List entry.                |
+| `:QFHooksLopen[height]`   | Open the Location List window.                     |
+| `:QFHooksLwindow[height]` | Open Location List window if items exist.          |
+| `:QFHooksLclose`          | Close the Location List window.                    |
+
 ## Configuration
 
 ### Example mappings
 
 ```vim
+" Quickfix mappings
 nnoremap <silent> qj :QFHooksCnext<CR>
 nnoremap <silent> qk :QFHooksCprevious<CR>
 nnoremap <silent> qf :QFHooksCfirst<CR>
 nnoremap <silent> ql :QFHooksClast<CR>
-autocmd FileType qf nnoremap <silent> <C-M> :QFHooksCc <C-R>=line('.')<CR><CR>
+
+" Location List mappings
+nnoremap <silent> <C-g>j :QFHooksLnext<CR>
+nnoremap <silent> <C-g>k :QFHooksLprevious<CR>
+nnoremap <silent> <C-g>f :QFHooksLfirst<CR>
+nnoremap <silent> <C-g>l :QFHooksLlast<CR>
+
+autocmd FileType qf nnoremap <silent> <C-M> :execute getwininfo(win_getid())[0].loclist ? 'QFHooksLl' : 'QFHooksCc'<CR>
 ```
 
 ### Example hooks
@@ -50,7 +73,7 @@ autocmd FileType qf nnoremap <silent> <C-M> :QFHooksCc <C-R>=line('.')<CR><CR>
 When reviewing pull requests, I sought an efficient way to manage the differences between the current branch and the base branch. Previously, I tried methods like using vim-fugitive to display git status and diffs with `:Git` and `:Gvdiffsplit`, opening diffs in tabs with commands like `vim -p 'tabdo Gdiff ...'`, and defining `autocmd QuickFixCmdPre/QuickFixCmdPost` for quickfix commands. However, these approaches had several issues:
 
 - **vim-fugitive**: Navigating between files was cumbersome, requiring a return to the fugitive window and repeating commands for each file. Additionally, `:Gstatus` (now superseded by `:Git` without arguments) doesn't allow specifying arguments to display diffs against the base branch.
-- **Using Tabs**: Managing multiple tabs became difficult, and executing `:Gvdiffsplit` for all buffers on startup significantly increased Vim's loading time. [Code Review from the Command Line](https://blog.jez.io/cli-code-review/)
+- **Using Tabs**: Managing multiple tabs became difficult, and executing `:Gvdiffsplit` for all buffers on startup significantly increased Vim's loading time.
 - **Using autocmd**: The configuration became complex and hard to manage, with potential performance degradation due to multiple `autocmd` executions. Limiting the scope of `autocmd` was also challenging, especially when `:Gvdiffsplit` wasn't always desired.
 
 To overcome these problems, I created **vim-qfhooks**. This plugin displays the output of `git diff --name-status $(git merge-base HEAD base-branch)` in the quickfix list and executes predefined custom hooks through wrapped commands provided by the plugin. By defining functions that execute commands like `:Gvdiffsplit` as hooks, you can flexibly set the timing and conditions for their execution. This approach allows you to leverage the powerful features of the quickfix list fully. For example, using the [vim-qf](https://github.com/romainl/vim-qf) plugin, you can further filter diff files with commands like `:Keep` and `:Reject`. Moreover, you can navigate between files using `cnext` and `cprevious` without opening the quickfix window, eliminating the need to switch back to the quickfix window to move to the next diff file, thereby enhancing usability.
@@ -218,25 +241,29 @@ augroup END
 
 Hooks are triggered **before** or **after** commands run. You can create both **context-based** and **title-based** hooks:
 
-- **Context Hooks**: Triggered by Quickfix context.
-- **Title Hooks**: Triggered by matching the Quickfix list title.
+- **Context Hooks**: Triggered by Quickfix or Location List context.
+- **Title Hooks**: Triggered by matching the Quickfix or Location List title.
 
 ### Examples of hook variables
 
 ```vim
-let g:qfhooks_default_cmds = ['cnext', 'cprevious', 'cc', 'cfirst', 'clast']
+let g:qfhooks_default_cmds = ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'lnext', 'lprevious', 'll', 'lfirst', 'llast']
 
 let g:qfhooks_context_hooks = {
 \ 'context': [{
 \   'stage': 'after',
-\   'cmds': ['cc', 'cnext', 'cprevious'],
+\   'cmds': ['cc', 'cnext', 'cprevious', 'll', 'lnext', 'lprevious'],
 \   'hook': function('HandleFunc')
 \ }]}
+```
 
+### Title Hooks Example
+
+```vim
 let g:qfhooks_title_hooks = {
 \ '^title_pattern.*': [{
 \   'stage': 'before',
-\   'cmds': ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'copen', 'cwindow', 'cclose'],
+\   'cmds': ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'copen', 'cwindow', 'cclose', 'lnext', 'lprevious', 'll', 'lfirst', 'llast', 'lopen', 'lwindow', 'lclose'],
 \   'hook': function('HandleFunc')
 \ }]}
 ```
@@ -244,7 +271,8 @@ let g:qfhooks_title_hooks = {
 ## Error Handling
 
 The plugin captures common errors like:
-- **E553**: Wraps to fallback commands (`cfirst` or `clast`).
+
+- **E553**: Wraps to fallback commands (`cfirst`/`clast` or `lfirst`/`llast`).
 - **E42**: Calls the user-defined error function when no items are present.
 
 ## License

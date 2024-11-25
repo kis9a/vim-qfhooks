@@ -17,6 +17,10 @@ function! s:get_qf_list_idx() abort
   return getqflist({'all': 0}).idx
 endfunction
 
+function! s:get_loc_list_idx() abort
+  return getloclist(0, {'all': 0}).idx
+endfunction
+
 function! s:set_qf_context_hook() abort
   call s:reset_vars()
   call setqflist([], 'r', {
@@ -292,4 +296,125 @@ function! s:suite.test_title_hook__cmd_not_matched() abort
   call s:set_qf_title_hook__multiple_cmds()
   call qfhooks#command#qf_hooks_clast(0)
   call s:assert.equal(g:hooked_count, 0)
+endfunction
+
+function! s:set_loc_context_hook() abort
+  call s:reset_vars()
+  call setloclist(0, [], 'r', {
+    \ 'context': {g:qfhooks_context_hook_key : 'context_hook'},
+    \ 'items': s:qf_list,
+    \ })
+  let g:qfhooks_context_hooks = {
+    \ 'context_hook': [{
+    \    'hook': function('IncrementHookedCount'),
+    \    'cmds': g:qfhooks_cmds,
+    \   }],
+    \ }
+endfunction
+
+function! s:suite.test_context_cnext() abort
+  call s:set_qf_context_hook()
+  call qfhooks#command#qf_hooks_cnext(0)
+  call s:assert.equal(g:hooked_count, 1)
+endfunction
+
+function! s:suite.test_context_lnext() abort
+  call s:set_loc_context_hook()
+  call qfhooks#command#qf_hooks_lnext(0)
+  call s:assert.equal(g:hooked_count, 1)
+endfunction
+
+function! s:suite.test_context_lprevious() abort
+  call s:set_loc_context_hook()
+  call qfhooks#command#qf_hooks_lprevious(0)
+  call s:assert.equal(g:hooked_count, 1)
+endfunction
+
+function! s:suite.test_context_lfirst() abort
+  call s:set_loc_context_hook()
+  call qfhooks#command#qf_hooks_lfirst(0)
+  call s:assert.equal(g:hooked_count, 1)
+endfunction
+
+function! s:suite.test_context_llast() abort
+  call s:set_loc_context_hook()
+  call qfhooks#command#qf_hooks_llast(0)
+  call s:assert.equal(g:hooked_count, 1)
+endfunction
+
+function! s:suite.test_context_ll() abort
+  call s:set_loc_context_hook()
+  call qfhooks#command#qf_hooks_ll(0, 1)
+  call s:assert.equal(g:hooked_count, 1)
+endfunction
+
+function! s:suite.test_context_lopen() abort
+  call s:set_loc_context_hook()
+  call qfhooks#command#qf_hooks_lopen()
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(win_gettype() ==# 'loclist', 1)
+endfunction
+
+function! s:suite.test_context_lclose() abort
+  call s:set_loc_context_hook()
+  call qfhooks#command#qf_hooks_lclose()
+  call s:assert.equal(g:hooked_count, 1)
+endfunction
+
+function! s:set_qf_context_hook_with_idx(idx) abort
+  call s:reset_vars()
+  call setqflist([], 'r', {
+    \ 'context': {g:qfhooks_context_hook_key : 'context_hook'},
+    \ 'items': s:qf_list,
+    \ })
+  call setqflist([], 'a', {
+    \ 'idx': a:idx,
+    \ })
+  let g:qfhooks_context_hooks = {
+    \ 'context_hook': [{
+    \    'hook': function('IncrementHookedCount'),
+    \    'cmds': g:qfhooks_cmds,
+    \   }],
+    \ }
+endfunction
+
+function! s:set_loc_context_hook_with_idx(idx) abort
+  call s:reset_vars()
+  call setloclist(0, [], 'r', {
+    \ 'context': {g:qfhooks_context_hook_key : 'context_hook'},
+    \ 'items': s:qf_list,
+    \ })
+  call setloclist(0, [], 'a', {
+    \ 'idx': a:idx,
+    \ })
+  let g:qfhooks_context_hooks = {
+    \ 'context_hook': [{
+    \    'hook': function('IncrementHookedCount'),
+    \    'cmds': g:qfhooks_cmds,
+    \   }],
+    \ }
+endfunction
+
+function! s:suite.test_qf_cnext_wraps_around() abort
+  call s:set_qf_context_hook_with_idx(len(s:qf_list))
+  call qfhooks#command#qf_hooks_cnext(0)
+  call s:assert.equal(s:get_qf_list_idx(), 1)
+endfunction
+
+function! s:suite.test_qf_cprevious_wraps_around() abort
+  call s:set_qf_context_hook_with_idx(1)
+  call qfhooks#command#qf_hooks_cprevious(0)
+  call s:assert.equal(s:get_qf_list_idx(), len(s:qf_list))
+endfunction
+
+function! s:suite.test_loc_lnext_wraps_around() abort
+  call s:set_loc_context_hook_with_idx(len(s:qf_list))
+  call qfhooks#command#qf_hooks_lnext(0)
+  call s:assert.equal(s:get_loc_list_idx(), 1)
+endfunction
+
+function! s:suite.test_loc_lprevious_wraps_around() abort
+  call s:set_loc_context_hook_with_idx(1)
+  call qfhooks#command#qf_hooks_lprevious(0)
+  call s:assert.equal(s:get_loc_list_idx(), len(s:qf_list))
 endfunction
