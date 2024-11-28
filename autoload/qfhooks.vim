@@ -61,7 +61,7 @@ function! s:wrap_cmd_bang(cmd, bang) abort
 endfunction
 
 function! qfhooks#execute_cmd(cmd) abort
-  let list = s:get_list(a:cmd, s:get_list_type(a:cmd))
+  let list = s:get_list(a:cmd, s:get_list_type(s:get_cmd_name(a:cmd)))
   call qfhooks#hook_cmd(a:cmd, list)
 endfunction
 
