@@ -1,13 +1,9 @@
-function! qfhooks#command#qf_hooks_cnext(bang) abort
-  call qfhooks#cnext(a:bang)
+function! qfhooks#command#qf_hooks_cnext(bang, count) abort
+  call qfhooks#cnext(a:bang, a:count)
 endfunction
 
-function! qfhooks#command#qf_hooks_cprevious(bang) abort
-  call qfhooks#cprevious(a:bang)
-endfunction
-
-function! qfhooks#command#qf_hooks_cc(bang, ...) abort
-  call qfhooks#cc(a:bang, join(a:000))
+function! qfhooks#command#qf_hooks_cprevious(bang, count) abort
+  call qfhooks#cprevious(a:bang, a:count)
 endfunction
 
 function! qfhooks#command#qf_hooks_cfirst(bang, ...) abort
@@ -16,6 +12,10 @@ endfunction
 
 function! qfhooks#command#qf_hooks_clast(bang, ...) abort
   call qfhooks#clast(a:bang, join(a:000))
+endfunction
+
+function! qfhooks#command#qf_hooks_cc(bang, ...) abort
+  call qfhooks#cc(a:bang, join(a:000))
 endfunction
 
 function! qfhooks#command#qf_hooks_copen(...) abort
@@ -30,16 +30,12 @@ function! qfhooks#command#qf_hooks_cclose() abort
   call qfhooks#cclose()
 endfunction
 
-function! qfhooks#command#qf_hooks_lnext(bang) abort
-  call qfhooks#lnext(a:bang)
+function! qfhooks#command#qf_hooks_lnext(bang, count) abort
+  call qfhooks#lnext(a:bang, a:count)
 endfunction
 
-function! qfhooks#command#qf_hooks_lprevious(bang) abort
-  call qfhooks#lprevious(a:bang)
-endfunction
-
-function! qfhooks#command#qf_hooks_ll(bang, ...) abort
-  call qfhooks#ll(a:bang, join(a:000))
+function! qfhooks#command#qf_hooks_lprevious(bang, count) abort
+  call qfhooks#lprevious(a:bang, a:count)
 endfunction
 
 function! qfhooks#command#qf_hooks_lfirst(bang, ...) abort
@@ -48,6 +44,10 @@ endfunction
 
 function! qfhooks#command#qf_hooks_llast(bang, ...) abort
   call qfhooks#llast(a:bang, join(a:000))
+endfunction
+
+function! qfhooks#command#qf_hooks_ll(bang, ...) abort
+  call qfhooks#ll(a:bang, join(a:000))
 endfunction
 
 function! qfhooks#command#qf_hooks_lopen(...) abort

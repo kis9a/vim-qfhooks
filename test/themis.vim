@@ -37,13 +37,13 @@ endfunction
 
 function! s:suite.test_context_cnext() abort
   call s:set_qf_context_hook()
-  call qfhooks#command#qf_hooks_cnext(0)
+  call qfhooks#command#qf_hooks_cnext(0, 0)
   call s:assert.equal(g:hooked_count, 1)
 endfunction
 
 function! s:suite.test_context_cprevious() abort
   call s:set_qf_context_hook()
-  call qfhooks#command#qf_hooks_cprevious(0)
+  call qfhooks#command#qf_hooks_cprevious(0, 0)
   call s:assert.equal(g:hooked_count, 1)
 endfunction
 
@@ -108,13 +108,13 @@ endfunction
 
 function! s:suite.test_title_cnext() abort
   call s:set_qf_title_hook()
-  call qfhooks#command#qf_hooks_cnext(0)
+  call qfhooks#command#qf_hooks_cnext(0, 0)
   call s:assert.equal(g:hooked_count, 1)
 endfunction
 
 function! s:suite.test_title_cprevious() abort
   call s:set_qf_title_hook()
-  call qfhooks#command#qf_hooks_cprevious(0)
+  call qfhooks#command#qf_hooks_cprevious(0, 0)
   call s:assert.equal(g:hooked_count, 1)
 endfunction
 
@@ -183,7 +183,7 @@ endfunction
 
 function! s:suite.test_context_hook__stage_before() abort
   call s:set_qf_context_hook__stage_before()
-  call qfhooks#command#qf_hooks_cnext(0)
+  call qfhooks#command#qf_hooks_cnext(0, 0)
   call s:assert.equal(s:get_qf_list_idx(), 2)
 endfunction
 
@@ -203,7 +203,7 @@ endfunction
 
 function! s:suite.test_context_hook__cmds_cnext() abort
   call s:set_qf_context_hook__cmds_cnext()
-  call qfhooks#command#qf_hooks_cnext(0)
+  call qfhooks#command#qf_hooks_cnext(0, 0)
   call s:assert.equal(g:hooked_count, 1)
 endfunction
 
@@ -215,7 +215,7 @@ endfunction
 
 function! s:suite.test_context_cnext_bang() abort
   call s:set_qf_context_hook()
-  call qfhooks#command#qf_hooks_cnext(1)
+  call qfhooks#command#qf_hooks_cnext(1, 0)
   call s:assert.equal(g:hooked_count, 1)
 endfunction
 
@@ -228,7 +228,7 @@ endfunction
 function! s:suite.test_empty_qf_list() abort
   call s:reset_vars()
   call setqflist([], 'r', {'items': []})
-  call qfhooks#command#qf_hooks_cnext(0)
+  call qfhooks#command#qf_hooks_cnext(0, 0)
   call s:assert.equal(g:hooked_count, 0)
 endfunction
 
@@ -248,7 +248,7 @@ endfunction
 
 function! s:suite.test_invalid_command() abort
   call s:set_invalid_context_hook()
-  call qfhooks#command#qf_hooks_cnext(0)
+  call qfhooks#command#qf_hooks_cnext(0, 0)
   call s:assert.equal(g:hooked_count, 0)
 endfunction
 
@@ -268,7 +268,7 @@ endfunction
 
 function! s:suite.test_context_hook__stage_before_bang() abort
   call s:set_qf_context_hook__stage_before_bang()
-  call qfhooks#command#qf_hooks_cnext(1)
+  call qfhooks#command#qf_hooks_cnext(1, 0)
   call s:assert.equal(s:get_qf_list_idx(), 2)
 endfunction
 
@@ -298,6 +298,61 @@ function! s:suite.test_title_hook__cmd_not_matched() abort
   call s:assert.equal(g:hooked_count, 0)
 endfunction
 
+function! s:set_qf_multiple_title_hooks() abort
+  call s:reset_vars()
+  call setqflist([], 'r', {
+    \ 'title': "multi_hook_test",
+    \ 'items': s:qf_list,
+    \ })
+  let g:qfhooks_title_hooks = {
+    \ 'multi_hook_test': [{
+    \    'hook': function('IncrementHookedCount'),
+    \    'cmds': g:qfhooks_cmds,
+    \   }],
+    \ 'multi_hook_.*': [{
+    \    'hook': function('IncrementHookedCount'),
+    \    'cmds': g:qfhooks_cmds,
+    \   }],
+    \ }
+endfunction
+
+function! s:set_qf_context_and_title_hooks() abort
+  call s:reset_vars()
+  call setqflist([], 'r', {
+    \ 'context': {g:qfhooks_context_hook_key : 'multi_hook_test'},
+    \ 'title': "multi_hook_test",
+    \ 'items': s:qf_list,
+    \ })
+  let g:qfhooks_title_hooks = {
+    \ 'multi_hook_test': [{
+    \    'hook': function('IncrementHookedCount'),
+    \    'cmds': g:qfhooks_cmds,
+    \   }],
+    \ 'multi_hook_.*': [{
+    \    'hook': function('IncrementHookedCount'),
+    \    'cmds': g:qfhooks_cmds,
+    \   }],
+    \ }
+ let g:qfhooks_context_hooks = {
+    \ 'multi_hook_test': [{
+    \    'hook': function('IncrementHookedCount'),
+    \    'cmds': g:qfhooks_cmds,
+    \   }],
+    \ }
+endfunction
+
+function! s:suite.test_multiple_title_hooks() abort
+  call s:set_qf_multiple_title_hooks()
+  call qfhooks#command#qf_hooks_cnext(0, 0)
+  call s:assert.equal(g:hooked_count, 2)
+endfunction
+
+function!s:suite.test_context_and_title_hooks() abort
+  call s:set_qf_context_and_title_hooks()
+  call qfhooks#command#qf_hooks_cnext(0, 0)
+  call s:assert.equal(g:hooked_count, 3)
+endfunction
+
 function! s:set_loc_context_hook() abort
   call s:reset_vars()
   call setloclist(0, [], 'r', {
@@ -314,19 +369,19 @@ endfunction
 
 function! s:suite.test_context_cnext() abort
   call s:set_qf_context_hook()
-  call qfhooks#command#qf_hooks_cnext(0)
+  call qfhooks#command#qf_hooks_cnext(0, 0)
   call s:assert.equal(g:hooked_count, 1)
 endfunction
 
 function! s:suite.test_context_lnext() abort
   call s:set_loc_context_hook()
-  call qfhooks#command#qf_hooks_lnext(0)
+  call qfhooks#command#qf_hooks_lnext(0, 0)
   call s:assert.equal(g:hooked_count, 1)
 endfunction
 
 function! s:suite.test_context_lprevious() abort
   call s:set_loc_context_hook()
-  call qfhooks#command#qf_hooks_lprevious(0)
+  call qfhooks#command#qf_hooks_lprevious(0, 0)
   call s:assert.equal(g:hooked_count, 1)
 endfunction
 
@@ -395,26 +450,145 @@ function! s:set_loc_context_hook_with_idx(idx) abort
     \ }
 endfunction
 
-function! s:suite.test_qf_cnext_wraps_around() abort
+function! s:suite.test_qf_cnext_wrap_around() abort
   call s:set_qf_context_hook_with_idx(len(s:qf_list))
-  call qfhooks#command#qf_hooks_cnext(0)
+  call qfhooks#command#qf_hooks_cnext(0, 0)
+  call s:assert.equal(g:hooked_count, 1)
   call s:assert.equal(s:get_qf_list_idx(), 1)
 endfunction
 
-function! s:suite.test_qf_cprevious_wraps_around() abort
+function! s:suite.test_qf_cnext_wrap_around_with_count() abort
+  call s:set_qf_context_hook_with_idx(len(s:qf_list))
+  call qfhooks#command#qf_hooks_cnext(0, 3)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_qf_list_idx(), 3)
+endfunction
+
+function! s:suite.test_qf_cnext_wrap_around_with_count_over_size() abort
   call s:set_qf_context_hook_with_idx(1)
-  call qfhooks#command#qf_hooks_cprevious(0)
+  call qfhooks#command#qf_hooks_cnext(0, len(s:qf_list) * 2 + 1)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_qf_list_idx(), 2)
+endfunction
+
+function! s:suite.test_qf_cprevious_wrap_around() abort
+  call s:set_qf_context_hook_with_idx(1)
+  call qfhooks#command#qf_hooks_cprevious(0, 0)
+  call s:assert.equal(g:hooked_count, 1)
   call s:assert.equal(s:get_qf_list_idx(), len(s:qf_list))
 endfunction
 
-function! s:suite.test_loc_lnext_wraps_around() abort
+function! s:suite.test_qf_cprevious_wrap_around_with_count_over_size() abort
+  call s:set_qf_context_hook_with_idx(2)
+  call qfhooks#command#qf_hooks_cprevious(0, len(s:qf_list) * 2 + 1)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_qf_list_idx(), 1)
+endfunction
+
+function! s:suite.test_qf_cnext_with_zero_count() abort
+  call s:set_qf_context_hook_with_idx(1)
+  call qfhooks#command#qf_hooks_cnext(0, 0)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_qf_list_idx(), 2)
+endfunction
+
+function! s:suite.test_qf_clast_from_first() abort
+  call s:set_qf_context_hook_with_idx(1)
+  call qfhooks#command#qf_hooks_clast(0)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_qf_list_idx(), len(s:qf_list))
+endfunction
+
+function! s:suite.test_loc_lnext_wrap_around() abort
   call s:set_loc_context_hook_with_idx(len(s:qf_list))
-  call qfhooks#command#qf_hooks_lnext(0)
+  call qfhooks#command#qf_hooks_lnext(0, 0)
+  call s:assert.equal(g:hooked_count, 1)
   call s:assert.equal(s:get_loc_list_idx(), 1)
 endfunction
 
-function! s:suite.test_loc_lprevious_wraps_around() abort
+function! s:suite.test_loc_lprevious_wrap_around() abort
   call s:set_loc_context_hook_with_idx(1)
-  call qfhooks#command#qf_hooks_lprevious(0)
+  call qfhooks#command#qf_hooks_lprevious(0, 0)
+  call s:assert.equal(g:hooked_count, 1)
   call s:assert.equal(s:get_loc_list_idx(), len(s:qf_list))
+endfunction
+
+function! s:suite.test_loc_lnext_wrap_around_with_count() abort
+  call s:set_loc_context_hook_with_idx(len(s:qf_list)-1)
+  call qfhooks#command#qf_hooks_lnext(0, 2)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_loc_list_idx(), 1)
+endfunction
+
+function! s:suite.test_loc_lprevious_wrap_around_with_count() abort
+  call s:set_loc_context_hook_with_idx(2)
+  call qfhooks#command#qf_hooks_lprevious(0, 2)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_loc_list_idx(), len(s:qf_list))
+endfunction
+
+function! s:suite.test_context_lwindow() abort
+  call s:set_loc_context_hook()
+  call qfhooks#command#qf_hooks_lwindow()
+  call s:assert.equal(g:hooked_count, 1)
+endfunction
+
+function! s:suite.test_context_lopen_with_height() abort
+  call s:set_loc_context_hook()
+  call qfhooks#command#qf_hooks_lopen(5)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(win_gettype() ==# 'loclist', 1)
+  call s:assert.equal(winheight(bufwinnr(bufnr('$'))), 5)
+endfunction
+
+function! s:suite.test_qf_cnext_with_count() abort
+  call s:set_qf_context_hook_with_idx(1)
+  call qfhooks#command#qf_hooks_cnext(0, 2)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_qf_list_idx(), 3)
+endfunction
+
+function! s:suite.test_loc_lnext_with_count() abort
+  call s:set_loc_context_hook_with_idx(1)
+  call qfhooks#command#qf_hooks_lnext(0, 2)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_loc_list_idx(), 3)
+endfunction
+
+function! s:suite.test_qf_cnext_wrap_around_with_count() abort
+  call s:set_qf_context_hook_with_idx(len(s:qf_list)-1)
+  call qfhooks#command#qf_hooks_cnext(0, 2)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_qf_list_idx(), 1)
+endfunction
+
+function! s:suite.test_qf_cprevious_wrap_around_with_count() abort
+  call s:set_qf_context_hook_with_idx(2)
+  call qfhooks#command#qf_hooks_cprevious(0, 2)
+  call s:assert.equal(g:hooked_count, 1)
+  call s:assert.equal(s:get_qf_list_idx(), len(s:qf_list))
+endfunction
+
+function! s:set_qf_context_hook_invalid_hook() abort
+  call s:reset_vars()
+  call setqflist([], 'r', {
+    \ 'context': {g:qfhooks_context_hook_key : 'context_hook'},
+    \ 'items': s:qf_list,
+    \ })
+  let g:qfhooks_context_hooks = {
+    \ 'context_hook': [{
+    \    'hook': 'NonExistentFunction',
+    \    'cmds': g:qfhooks_cmds,
+    \   }],
+    \ }
+endfunction
+
+function! s:suite.test_context_hook_invalid_hook() abort
+  call s:set_qf_context_hook_invalid_hook()
+  try
+    call qfhooks#command#qf_hooks_cnext(0, 0)
+    call s:assert.fail('Expected an exception by a non-existent hook function')
+  catch /^Vim\%((\a\+)\)\=:E718/
+    call s:assert.true(1)
+  endtry
 endfunction
