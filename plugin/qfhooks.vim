@@ -42,8 +42,8 @@ let g:qfhooks_stages = ['before', 'after']
 let g:qfhooks_stages_enum = s:qfhooks_enum(g:qfhooks_stages)
 let g:qfhooks_default_stage = 'after'
 
-command! -bang QFHooksCnext call qfhooks#command#qf_hooks_cnext(<bang>0)
-command! -bang QFHooksCprevious call qfhooks#command#qf_hooks_cprevious(<bang>0)
+command! -count=1 -bang QFHooksCnext call qfhooks#command#qf_hooks_cnext(<bang>0, <count>)
+command! -count=1 -bang QFHooksCprevious call qfhooks#command#qf_hooks_cprevious(<bang>0, <count>)
 command! -bang -nargs=? QFHooksCfirst call qfhooks#command#qf_hooks_cfirst(<bang>0, <q-args>)
 command! -bang -nargs=? QFHooksClast call qfhooks#command#qf_hooks_clast(<bang>0, <q-args>)
 command! -bang -nargs=? QFHooksCc call qfhooks#command#qf_hooks_cc(<bang>0, <q-args>)
@@ -51,11 +51,17 @@ command! -nargs=? QFHooksCopen call qfhooks#command#qf_hooks_copen(<q-args>)
 command! -nargs=? QFHooksCwindow call qfhooks#command#qf_hooks_cwindow(<q-args>)
 command! QFHooksCclose call qfhooks#command#qf_hooks_cclose()
 
-command! -bang QFHooksLnext call qfhooks#command#qf_hooks_lnext(<bang>0)
-command! -bang QFHooksLprevious call qfhooks#command#qf_hooks_lprevious(<bang>0)
+nnoremap <silent> <Plug>(QFHooksCnext) :<C-U>execute v:count1 . 'QFHooksCnext'<CR>
+nnoremap <silent> <Plug>(QFHooksCprevious) :<C-U>execute v:count1 . 'QFHooksCprevious'<CR>
+
+command! -count=1 -bang QFHooksLnext call qfhooks#command#qf_hooks_lnext(<bang>0, <count>)
+command! -count=1 -bang QFHooksLprevious call qfhooks#command#qf_hooks_lprevious(<bang>0, <count>)
 command! -bang -nargs=? QFHooksLfirst call qfhooks#command#qf_hooks_lfirst(<bang>0, <q-args>)
 command! -bang -nargs=? QFHooksLlast call qfhooks#command#qf_hooks_llast(<bang>0, <q-args>)
 command! -bang -nargs=? QFHooksLl call qfhooks#command#qf_hooks_ll(<bang>0, <q-args>)
 command! -nargs=? QFHooksLopen call qfhooks#command#qf_hooks_lopen(<q-args>)
 command! -nargs=? QFHooksLwindow call qfhooks#command#qf_hooks_lwindow(<q-args>)
 command! QFHooksLclose call qfhooks#command#qf_hooks_lclose()
+
+nnoremap <silent> <Plug>(QFHooksLnext) :<C-U>execute v:count1 . 'QFHooksLnext'<CR>
+nnoremap <silent> <Plug>(QFHooksLprevious) :<C-U>execute v:count1 . 'QFHooksLprevious'<CR>

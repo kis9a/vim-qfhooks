@@ -22,29 +22,29 @@ The plugin wraps around native Quickfix and Location List commands. Use the enha
 
 ### Quickfix Commands
 
-| Command                   | Description                                    |
-| ------------------------  | ---------------------------------------------- |
-| `:QFHooksCnext[!]`        | Go to the next Quickfix item or wrap to first. |
-| `:QFHooksCprevious[!]`    | Go to the previous item or wrap to last.       |
-| `:QFHooksCc[!][nr]`       | Jump to the given Quickfix entry.              |
-| `:QFHooksCfirst[!][nr]`   | Go to the first Quickfix entry.                |
-| `:QFHooksClast[!][nr]`    | Go to the last Quickfix entry.                 |
-| `:QFHooksCopen[height]`   | Open the Quickfix window.                      |
-| `:QFHooksCwindow[height]` | Open Quickfix window if items exist.           |
-| `:QFHooksCclose`          | Close the Quickfix window.                     |
+| Command                    | Description                                    |
+| ------------------------   | ---------------------------------------------- |
+| `:[nr]QFHooksCnext[!]`     | Go to the next Quickfix item or wrap to first. |
+| `:[nr]QFHooksCprevious[!]` | Go to the previous item or wrap to last.       |
+| `:QFHooksCc[!][nr]`        | Jump to the given Quickfix entry.              |
+| `:QFHooksCfirst[!][nr]`    | Go to the first Quickfix entry.                |
+| `:QFHooksClast[!][nr]`     | Go to the last Quickfix entry.                 |
+| `:QFHooksCopen[height]`    | Open the Quickfix window.                      |
+| `:QFHooksCwindow[height]`  | Open Quickfix window if items exist.           |
+| `:QFHooksCclose`           | Close the Quickfix window.                     |
 
 ### Location List Commands
 
-| Command                   | Description                                        |
-| ------------------------  | -------------------------------------------------- |
-| `:QFHooksLnext[!]`        | Go to the next Location List item or wrap to first. |
-| `:QFHooksLprevious[!]`    | Go to the previous item or wrap to last.           |
-| `:QFHooksLl[!][nr]`       | Jump to the given Location List entry.             |
-| `:QFHooksLfirst[!][nr]`   | Go to the first Location List entry.               |
-| `:QFHooksLlast[!][nr]`    | Go to the last Location List entry.                |
-| `:QFHooksLopen[height]`   | Open the Location List window.                     |
-| `:QFHooksLwindow[height]` | Open Location List window if items exist.          |
-| `:QFHooksLclose`          | Close the Location List window.                    |
+| Command                    | Description                                         |
+| ------------------------   | --------------------------------------------------  |
+| `:[nr]QFHooksLnext[!]`     | Go to the next Location List item or wrap to first. |
+| `:[nr]QFHooksLprevious[!]` | Go to the previous item or wrap to last.            |
+| `:QFHooksLl[!][nr]`        | Jump to the given Location List entry.              |
+| `:QFHooksLfirst[!][nr]`    | Go to the first Location List entry.                |
+| `:QFHooksLlast[!][nr]`     | Go to the last Location List entry.                 |
+| `:QFHooksLopen[height]`    | Open the Location List window.                      |
+| `:QFHooksLwindow[height]`  | Open Location List window if items exist.           |
+| `:QFHooksLclose`           | Close the Location List window.                     |
 
 ## Configuration
 
@@ -52,14 +52,14 @@ The plugin wraps around native Quickfix and Location List commands. Use the enha
 
 ```vim
 " Quickfix mappings
-nnoremap <silent> qj :QFHooksCnext<CR>
-nnoremap <silent> qk :QFHooksCprevious<CR>
+nnoremap <silent> qj <Plug>(QFHooksCnext)
+nnoremap <silent> qk <Plug>(QFHooksCprevious)
 nnoremap <silent> qf :QFHooksCfirst<CR>
 nnoremap <silent> ql :QFHooksClast<CR>
 
 " Location List mappings
-nnoremap <silent> <C-g>j :QFHooksLnext<CR>
-nnoremap <silent> <C-g>k :QFHooksLprevious<CR>
+nnoremap <silent> <C-g>j <Plug>(QFHooksLnext)
+nnoremap <silent> <C-g>k <Plug>(QFHooksLprevious)
 nnoremap <silent> <C-g>f :QFHooksLfirst<CR>
 nnoremap <silent> <C-g>l :QFHooksLlast<CR>
 
