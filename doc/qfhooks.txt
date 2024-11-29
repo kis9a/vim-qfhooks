@@ -111,11 +111,15 @@ let g:qfhooks_no_items_error_func = 'MyCustomErrorHandler'
 5. Hook Execution Logic                                  *qfhooks-hooks*
 
 Hooks can be triggered at two stages: `before` and `after` the execution of a command.
+Each hook is defined by several fields that control its behavior.
 
-| Stage     | Description                                   |
-| --------- | --------------------------------------------- |
-| `before`  | Hook is executed before the command runs.     |
-| `after`   | Hook is executed after the command completes. |
+### Hook Fields Overview
+
+| Field      | Description                                                                 |
+|------------|-----------------------------------------------------------------------------|
+| `stage`    | When to execute the hook (`'before'` or `'after'`). Defaults to `'after'`.  |
+| `priority` | Execution order of hooks. Lower values run first. Defaults to `10`.         |
+| `hook`     | The function **or command** to execute when the hook is triggered.          |
 
 ### Context Hooks Example
 
@@ -135,7 +139,7 @@ let g:qfhooks_title_hooks = {
 \ 'example_title': [{
 \   'stage': 'after',
 \   'cmds': ['copen', 'lopen'],
-\   'hook': function('AnotherHookFunction')
+\   'hook': 'echo "Title hook triggered!"'
 \ }]}
 ```
 
