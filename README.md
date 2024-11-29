@@ -1,11 +1,5 @@
 # vim-qfhooks
 
-## Features
-
-- **Extendable Commands**: Adds custom logic around common Quickfix and Location List commands (`cnext`, `cprevious`, `cc`, `clast`, `lnext`, `lprevious`, `ll`, `llast`, etc.).
-- **Hooks System**: Execute custom functions **before** or **after** command execution.
-- **Context and Title Hooks**: Trigger actions based on the Quickfix or Location List context or title patterns.
-
 ## Installation
 
 Use your favorite plugin manager.
@@ -15,6 +9,51 @@ Use your favorite plugin manager.
 ```vim
 Plug 'kis9a/vim-qfhooks'
 ```
+
+## Config
+
+### Example mappings
+
+```vim
+" Quickfix mappings
+nnoremap <silent> qj <Plug>(QFHooksCnext)
+nnoremap <silent> qk <Plug>(QFHooksCprevious)
+nnoremap <silent> qf :QFHooksCfirst<CR>
+nnoremap <silent> ql :QFHooksClast<CR>
+
+" Location List mappings
+nnoremap <silent> <C-g>j <Plug>(QFHooksLnext)
+nnoremap <silent> <C-g>k <Plug>(QFHooksLprevious)
+nnoremap <silent> <C-g>f :QFHooksLfirst<CR>
+nnoremap <silent> <C-g>l :QFHooksLlast<CR>
+
+autocmd FileType qf nnoremap <buffer> <silent> <C-M> :execute getwininfo(win_getid())[0].loclist ? 'QFHooksLl' : 'QFHooksCc'<CR>
+```
+
+### Hands-on
+
+* Add `~/.vimrc`
+
+```
+let g:qfhooks_context_hooks = {
+  \ 'smile': [{
+  \   'cmds': ['cc'],
+  \   'hook': 'smile'
+  \ }]}
+```
+
+* Run the following command
+
+```
+:call setqflist([], 'r', { 'context': { 'qfhooks': 'smile' }, 'items': [{ 'lnum' : 1, 'text' : "smile" }] }) | copen
+" Type <Enter> or execute :QFHooksCc
+```
+
+## Features
+
+- **Extendable Commands**: Adds custom logic around common Quickfix and Location List commands (`cnext`, `cprevious`, `cc`, `clast`, `lnext`, `lprevious`, `ll`, `llast`, etc.).
+- **Hooks System**: Execute custom functions or commands before or after command execution, with control over execution order using priorities.
+- **Context and Title Hooks**: Trigger actions based on the Quickfix or Location List context or title patterns.
 
 ## Usage
 
@@ -46,26 +85,6 @@ The plugin wraps around native Quickfix and Location List commands. Use the enha
 | `:QFHooksLwindow[height]`  | Open Location List window if items exist.           |
 | `:QFHooksLclose`           | Close the Location List window.                     |
 
-## Configuration
-
-### Example mappings
-
-```vim
-" Quickfix mappings
-nnoremap <silent> qj <Plug>(QFHooksCnext)
-nnoremap <silent> qk <Plug>(QFHooksCprevious)
-nnoremap <silent> qf :QFHooksCfirst<CR>
-nnoremap <silent> ql :QFHooksClast<CR>
-
-" Location List mappings
-nnoremap <silent> <C-g>j <Plug>(QFHooksLnext)
-nnoremap <silent> <C-g>k <Plug>(QFHooksLprevious)
-nnoremap <silent> <C-g>f :QFHooksLfirst<CR>
-nnoremap <silent> <C-g>l :QFHooksLlast<CR>
-
-autocmd FileType qf nnoremap <silent> <C-M> :execute getwininfo(win_getid())[0].loclist ? 'QFHooksLl' : 'QFHooksCc'<CR>
-```
-
 ### Example hooks
 
 #### Review PR
@@ -78,7 +97,11 @@ When reviewing pull requests, I sought an efficient way to manage the difference
 
 To overcome these problems, I created **vim-qfhooks**. This plugin displays the output of `git diff --name-status $(git merge-base HEAD base-branch)` in the quickfix list and executes predefined custom hooks through wrapped commands provided by the plugin. By defining functions that execute commands like `:Gvdiffsplit` as hooks, you can flexibly set the timing and conditions for their execution. This approach allows you to leverage the powerful features of the quickfix list fully. For example, using the [vim-qf](https://github.com/romainl/vim-qf) plugin, you can further filter diff files with commands like `:Keep` and `:Reject`. Moreover, you can navigate between files using `cnext` and `cprevious` without opening the quickfix window, eliminating the need to switch back to the quickfix window to move to the next diff file, thereby enhancing usability.
 
-Add the following hook configuration to your `.vimrc`:
+![qfhooks - PR review - issue #1](https://github.com/user-attachments/assets/c4694952-cfce-4585-8c08-97709dab7e87)
+
+<details close>
+<summary>Add the following hook configuration to your `.vimrc`</summary>
+<br/>
 
 ```vim
 function! s:openBaseDiffQf(base)
@@ -136,9 +159,15 @@ let g:qfhooks_context_hooks = {
 command! -nargs=? ReviewPR call s:openBaseDiffQf(<q-args>)
 ```
 
+</details>
+
 ### Yank history
 
 By integrating with plugins like vim-yoink, you can display your yank history in the Quickfix list and use custom hooks to select and reuse previous yanks effortlessly.
+
+<details close>
+<summary>Add the following hook configuration to your `.vimrc`</summary>
+<br/>
 
 ```vim
 " Plug 'kis9a/vim-yoink'
@@ -237,6 +266,8 @@ augroup yoink
 augroup END
 ```
 
+</details>
+
 ## Hooks System
 
 Hooks are triggered **before** or **after** commands run. You can create both **context-based** and **title-based** hooks:
@@ -250,30 +281,29 @@ Hooks are triggered **before** or **after** commands run. You can create both **
 let g:qfhooks_default_cmds = ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'lnext', 'lprevious', 'll', 'lfirst', 'llast']
 
 let g:qfhooks_context_hooks = {
-\ 'context': [{
-\   'stage': 'after',
-\   'cmds': ['cc', 'cnext', 'cprevious', 'll', 'lnext', 'lprevious'],
-\   'hook': function('HandleFunc')
-\ }]}
+\ 'context': [
+\   {
+\     'priority': 1,
+\     'stage': 'after',
+\     'cmds': ['cc', 'cnext', 'cprevious', 'll', 'lnext', 'lprevious'],
+\     'hook': function('HandleFunc')
+\   }
+\ ]}
 ```
 
 ### Title Hooks Example
 
 ```vim
 let g:qfhooks_title_hooks = {
-\ '^title_pattern.*': [{
-\   'stage': 'before',
-\   'cmds': ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'copen', 'cwindow', 'cclose', 'lnext', 'lprevious', 'll', 'lfirst', 'llast', 'lopen', 'lwindow', 'lclose'],
-\   'hook': function('HandleFunc')
-\ }]}
+\ '^title_pattern.*': [
+\   {
+\     'priority': 20,
+\     'stage': 'before',
+\     'cmds': ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'copen', 'cwindow', 'cclose', 'lnext', 'lprevious', 'll', 'lfirst', 'llast', 'lopen', 'lwindow', 'lclose'],
+\     'hook': 'RunCommand'
+\   }
+\ ]}
 ```
-
-## Error Handling
-
-The plugin captures common errors like:
-
-- **E553**: Wraps to fallback commands (`cfirst`/`clast` or `lfirst`/`llast`).
-- **E42**: Calls the user-defined error function when no items are present.
 
 ## License
 

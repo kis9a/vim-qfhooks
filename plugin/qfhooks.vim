@@ -26,6 +26,10 @@ if !exists('g:qfhooks_default_cmds')
   let g:qfhooks_default_cmds = ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'lnext', 'lprevious', 'll', 'lfirst', 'llast']
 endif
 
+if !exists('g:qfhooks_default_priority')
+  let g:qfhooks_default_priority = 10
+endif
+
 function! s:qfhooks_enum(items) abort
   let dict = {}
   let index = 0

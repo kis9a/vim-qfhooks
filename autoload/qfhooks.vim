@@ -38,14 +38,10 @@ function! s:get_list(cmd, list_type) abort
   endif
 endfunction
 
-function! s:get_cmd_name(cmd) abort
-  return substitute(substitute(matchstr(a:cmd, '^\S\+'), '!\s*$', '', ''), '^\d\+\s*', '', '')
-endfunction
-
 function! s:get_list_type(cmd_name) abort
-  if a:cmd_name =~ '^c'
+  if a:cmd_name =~# '^c'
     return 'qf'
-  elseif a:cmd_name =~ '^l'
+  elseif a:cmd_name =~# '^l'
     return 'loc'
   else
     return ''
@@ -60,13 +56,17 @@ function! s:wrap_cmd_bang(cmd, bang) abort
   return cmd
 endfunction
 
+function! qfhooks#get_cmd_name(cmd) abort
+  return substitute(substitute(substitute(matchstr(a:cmd, '^\S\+'), '!\s*$', '', ''), '\d\+\s*$', '', ''), '^\d\+\s*', '', '')
+endfunction
+
 function! qfhooks#execute_cmd(cmd) abort
-  let list = s:get_list(a:cmd, s:get_list_type(s:get_cmd_name(a:cmd)))
+  let list = s:get_list(a:cmd, s:get_list_type(qfhooks#get_cmd_name(a:cmd)))
   call qfhooks#hook_cmd(a:cmd, list)
 endfunction
 
 function! qfhooks#execute_wrap_around_cmd(cmd, bang, callback, preparer) abort
-  let list = s:get_list(a:cmd, s:get_list_type(s:get_cmd_name(a:cmd)))
+  let list = s:get_list(a:cmd, s:get_list_type(qfhooks#get_cmd_name(a:cmd)))
   if exists('a:preparer') | call a:preparer(list)() | endif
   try
     call qfhooks#hook_cmd(a:cmd, list)
@@ -94,6 +94,7 @@ function! qfhooks#execute_hook(cmd, stage, list) abort
   let title = a:list.title
   let context_hook_key = get(g:, 'qfhooks_context_hook_key', 'qfhooks')
   let context_dict = {}
+  let priority_queue = []
 
   if type(context) == type('')
     try
@@ -109,10 +110,10 @@ function! qfhooks#execute_hook(cmd, stage, list) abort
 
     if has_key(g:qfhooks_context_hooks, context_key)
       for hook_info in g:qfhooks_context_hooks[context_key]
-        let stage = get(hook_info, 'stage', g:qfhooks_default_stage)
+        let hook_stage = get(hook_info, 'stage', g:qfhooks_default_stage)
         let cmds = get(hook_info, 'cmds', g:qfhooks_default_cmds)
-        if g:qfhooks_stages_enum[stage] ==# a:stage && index(cmds, s:get_cmd_name(a:cmd)) != -1
-          call hook_info.hook()
+        if g:qfhooks_stages_enum[hook_stage] ==# a:stage && index(cmds, qfhooks#get_cmd_name(a:cmd)) != -1
+          call add(priority_queue, hook_info)
         endif
       endfor
     endif
@@ -121,13 +122,23 @@ function! qfhooks#execute_hook(cmd, stage, list) abort
   for pattern in keys(g:qfhooks_title_hooks)
     if match(title, pattern) != -1
       for hook_info in g:qfhooks_title_hooks[pattern]
-        let stage = get(hook_info, 'stage', g:qfhooks_default_stage)
+        let hook_stage = get(hook_info, 'stage', g:qfhooks_default_stage)
         let cmds = get(hook_info, 'cmds', g:qfhooks_default_cmds)
-        if g:qfhooks_stages_enum[stage] ==# a:stage && index(cmds, s:get_cmd_name(a:cmd)) != -1
-          call hook_info.hook()
-          break
+        if g:qfhooks_stages_enum[hook_stage] ==# a:stage && index(cmds, qfhooks#get_cmd_name(a:cmd)) != -1
+          call add(priority_queue, hook_info)
         endif
       endfor
+    endif
+  endfor
+
+  let default_priority = g:qfhooks_default_priority
+  call sort(priority_queue, {a, b -> (get(a, 'priority', default_priority) > get(b, 'priority', default_priority)) ? 1 : -1 })
+
+  for hook_info in priority_queue
+    if type(hook_info.hook) == v:t_func
+      call hook_info.hook()
+    elseif type(hook_info.hook) == v:t_string
+      execute hook_info.hook
     endif
   endfor
 endfunction
@@ -137,11 +148,11 @@ function! qfhooks#cnext(bang, count) abort
   let cmd = s:wrap_cmd_bang(c . 'cnext', a:bang)
   let args = ['clast', v:true, c]
   call qfhooks#execute_wrap_around_cmd(
-      \ cmd,
-      \ a:bang,
-      \ function('s:callback_wrap', args),
-      \ function('s:prepare_wrap', args)
-      \ )
+    \ cmd,
+    \ a:bang,
+    \ function('s:callback_wrap', args),
+    \ function('s:prepare_wrap', args)
+    \ )
 endfunction
 
 function! qfhooks#cprevious(bang, count) abort
@@ -149,11 +160,11 @@ function! qfhooks#cprevious(bang, count) abort
   let cmd = s:wrap_cmd_bang(c . 'cprevious', a:bang)
   let args = ['cfirst', v:false, c]
   call qfhooks#execute_wrap_around_cmd(
-      \ cmd,
-      \ a:bang,
-      \ function('s:callback_wrap', args),
-      \ function('s:prepare_wrap', args)
-      \ )
+    \ cmd,
+    \ a:bang,
+    \ function('s:callback_wrap', args),
+    \ function('s:prepare_wrap', args)
+    \ )
 endfunction
 
 function! qfhooks#cc(bang, nr) abort
@@ -191,11 +202,11 @@ function! qfhooks#lnext(bang, count) abort
   let cmd = s:wrap_cmd_bang(c . 'lnext', a:bang)
   let args = ['llast', v:true, c]
   call qfhooks#execute_wrap_around_cmd(
-      \ cmd,
-      \ a:bang,
-      \ function('s:callback_wrap', args),
-      \ function('s:prepare_wrap', args)
-      \ )
+    \ cmd,
+    \ a:bang,
+    \ function('s:callback_wrap', args),
+    \ function('s:prepare_wrap', args)
+    \ )
 endfunction
 
 function! qfhooks#lprevious(bang, count) abort
@@ -203,11 +214,11 @@ function! qfhooks#lprevious(bang, count) abort
   let cmd = s:wrap_cmd_bang(c . 'lprevious', a:bang)
   let args = ['lfirst', v:false, c]
   call qfhooks#execute_wrap_around_cmd(
-      \ cmd,
-      \ a:bang,
-      \ function('s:callback_wrap', args),
-      \ function('s:prepare_wrap', args)
-      \ )
+    \ cmd,
+    \ a:bang,
+    \ function('s:callback_wrap', args),
+    \ function('s:prepare_wrap', args)
+    \ )
 endfunction
 
 function! qfhooks#ll(bang, nr) abort
