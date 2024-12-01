@@ -1,93 +1,116 @@
 # vim-qfhooks
 
+Enhance your Quickfix and Location List commands in Vim with custom hooks.
+
+This plugin allows you to define functions or commands to be executed at specific stages of Quickfix or Location List actions, giving you fine-grained control over their behavior.
+
 ## Installation
 
-Use your favorite plugin manager.
+Install the plugin using your preferred plugin manager.
 
-- Example: [vim-plug](https://github.com/junegunn/vim-plug)
+Example with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```vim
 Plug 'kis9a/vim-qfhooks'
 ```
 
-## Config
+## Configuration
 
-### Example mappings
+### Example Mappings
+
+Add the following key mappings to your `.vimrc` to navigate Quickfix and Location Lists efficiently:
 
 ```vim
-" Quickfix mappings
+" Quickfix navigation
 nnoremap <silent> qj <Plug>(QFHooksCnext)
 nnoremap <silent> qk <Plug>(QFHooksCprevious)
 nnoremap <silent> qf :QFHooksCfirst<CR>
 nnoremap <silent> ql :QFHooksClast<CR>
 
-" Location List mappings
+" Location List navigation
 nnoremap <silent> <C-g>j <Plug>(QFHooksLnext)
 nnoremap <silent> <C-g>k <Plug>(QFHooksLprevious)
 nnoremap <silent> <C-g>f :QFHooksLfirst<CR>
 nnoremap <silent> <C-g>l :QFHooksLlast<CR>
 
+" Conditional mapping based on list type
 autocmd FileType qf nnoremap <buffer> <silent> <C-M> :execute getwininfo(win_getid())[0].loclist ? 'QFHooksLl' : 'QFHooksCc'<CR>
 ```
 
-### Hands-on
-
-* Add `~/.vimrc`
-
-```
-let g:qfhooks_context_hooks = {
-  \ 'smile': [{
-  \   'cmds': ['cc'],
-  \   'hook': 'smile'
-  \ }]}
-```
-
-* Run the following command
-
-```
-:call setqflist([], 'r', { 'context': { 'qfhooks': 'smile' }, 'items': [{ 'lnum' : 1, 'text' : "smile" }] }) | copen
-" Type <Enter> or execute :QFHooksCc
-```
-
-## Features
-
-- **Extendable Commands**: Adds custom logic around common Quickfix and Location List commands (`cnext`, `cprevious`, `cc`, `clast`, `lnext`, `lprevious`, `ll`, `llast`, etc.).
-- **Hooks System**: Execute custom functions or commands before or after command execution, with control over execution order using priorities.
-- **Context and Title Hooks**: Trigger actions based on the Quickfix or Location List context or title patterns.
-
-## Usage
-
-The plugin wraps around native Quickfix and Location List commands. Use the enhanced commands the same way, with optional **bang** (`!`) to modify behavior:
+## Commands
 
 ### Quickfix Commands
 
 | Command                    | Description                                    |
-| ------------------------   | ---------------------------------------------- |
-| `:[nr]QFHooksCnext[!]`     | Go to the next Quickfix item or wrap to first. |
-| `:[nr]QFHooksCprevious[!]` | Go to the previous item or wrap to last.       |
-| `:QFHooksCc[!][nr]`        | Jump to the given Quickfix entry.              |
-| `:QFHooksCfirst[!][nr]`    | Go to the first Quickfix entry.                |
-| `:QFHooksClast[!][nr]`     | Go to the last Quickfix entry.                 |
-| `:QFHooksCopen[height]`    | Open the Quickfix window.                      |
-| `:QFHooksCwindow[height]`  | Open Quickfix window if items exist.           |
-| `:QFHooksCclose`           | Close the Quickfix window.                     |
+| -------------------------- | ---------------------------------------------- |
+| `[nr]QFHooksCnext[!]`      | Go to the next Quickfix item or wrap to first. |
+| `[nr]QFHooksCprevious[!]`  | Go to the previous item or wrap to last.       |
+| `QFHooksCc[!][nr]`         | Jump to the specified Quickfix entry.          |
+| `QFHooksCfirst[!][nr]`     | Go to the first Quickfix entry.                |
+| `QFHooksClast[!][nr]`      | Go to the last Quickfix entry.                 |
+| `QFHooksCopen[height]`     | Open the Quickfix window.                      |
+| `QFHooksCwindow[height]`   | Open the Quickfix window if items exist.       |
+| `QFHooksCclose`            | Close the Quickfix window.                     |
 
 ### Location List Commands
 
-| Command                    | Description                                         |
-| ------------------------   | --------------------------------------------------  |
-| `:[nr]QFHooksLnext[!]`     | Go to the next Location List item or wrap to first. |
-| `:[nr]QFHooksLprevious[!]` | Go to the previous item or wrap to last.            |
-| `:QFHooksLl[!][nr]`        | Jump to the given Location List entry.              |
-| `:QFHooksLfirst[!][nr]`    | Go to the first Location List entry.                |
-| `:QFHooksLlast[!][nr]`     | Go to the last Location List entry.                 |
-| `:QFHooksLopen[height]`    | Open the Location List window.                      |
-| `:QFHooksLwindow[height]`  | Open Location List window if items exist.           |
-| `:QFHooksLclose`           | Close the Location List window.                     |
+| Command                     | Description                                         |
+| --------------------------- | --------------------------------------------------- |
+| `[nr]QFHooksLnext[!]`       | Go to the next Location List item or wrap to first. |
+| `[nr]QFHooksLprevious[!]`   | Go to the previous item or wrap to last.            |
+| `QFHooksLl[!][nr]`          | Jump to the specified Location List entry.          |
+| `QFHooksLfirst[!][nr]`      | Go to the first Location List entry.                |
+| `QFHooksLlast[!][nr]`       | Go to the last Location List entry.                 |
+| `QFHooksLopen[height]`      | Open the Location List window.                      |
+| `QFHooksLwindow[height]`    | Open the Location List window if items exist.       |
+| `QFHooksLclose`             | Close the Location List window.                     |
 
-### Example hooks
+## Hooks System
 
-#### Review PR
+- **Context-Based Hooks**: Define hooks based on specific contexts or keys within the Quickfix or Location List.
+- **Title-Based Hooks**: Execute hooks based on the titles of Quickfix or Location List windows.
+- **Execution Stages**: Trigger hooks **before** and/or **after** specific commands.
+- **Priority**: Set priorities to control the order in which multiple hooks are executed.
+- **Command-Specific Hooks**: Assign hooks to commands like `cnext`, `cprevious`, `copen`, `cclose`, `lnext`, `lprevious`, etc.
+- **Customizable Hooks**: Attach custom functions or commands to Quickfix and Location List events.
+
+### Example Usage
+
+Add the following to your `.vimrc` to define custom hooks:
+
+```vim
+let g:qfhooks_context_hooks = {
+  \ 'context_smile': [
+  \   {
+  \     'cmds': ['copen'],
+  \     'stage': 'after',
+  \     'hook': 'echo "Quickfix window opened!"'
+  \   },
+  \   {
+  \     'cmds': ['cc'],
+  \     'hook': 'smile'
+  \   }
+  \ ],
+\ }
+```
+
+Then, run the following command and press `<Enter>` or execute `:QFHooksCc`:
+
+```vim
+call setqflist([], 'r', { 'context': { 'qfhooks': 'context_smile' }, 'items': [{ 'lnum': 0, 'text': 'smile' }] }) | QFHooksCopen
+```
+
+## Example Hooks
+
+### Code Review Automation
+
+Enhance your code review process by automating diff viewing between branches.
+
+<image width="720px" src="https://github.com/user-attachments/assets/981d3cd3-8551-4247-a612-66b21a5a3338"></image>
+
+<details close>
+<summary>Add the following hook configuration to your `.vimrc`</summary>
+<br/>
 
 When reviewing pull requests, I sought an efficient way to manage the differences between the current branch and the base branch. Previously, I tried methods like using vim-fugitive to display git status and diffs with `:Git` and `:Gvdiffsplit`, opening diffs in tabs with commands like `vim -p 'tabdo Gdiff ...'`, and defining `autocmd QuickFixCmdPre/QuickFixCmdPost` for quickfix commands. However, these approaches had several issues:
 
@@ -96,12 +119,6 @@ When reviewing pull requests, I sought an efficient way to manage the difference
 - **Using autocmd**: The configuration became complex and hard to manage, with potential performance degradation due to multiple `autocmd` executions. Limiting the scope of `autocmd` was also challenging, especially when `:Gvdiffsplit` wasn't always desired.
 
 To overcome these problems, I created **vim-qfhooks**. This plugin displays the output of `git diff --name-status $(git merge-base HEAD base-branch)` in the quickfix list and executes predefined custom hooks through wrapped commands provided by the plugin. By defining functions that execute commands like `:Gvdiffsplit` as hooks, you can flexibly set the timing and conditions for their execution. This approach allows you to leverage the powerful features of the quickfix list fully. For example, using the [vim-qf](https://github.com/romainl/vim-qf) plugin, you can further filter diff files with commands like `:Keep` and `:Reject`. Moreover, you can navigate between files using `cnext` and `cprevious` without opening the quickfix window, eliminating the need to switch back to the quickfix window to move to the next diff file, thereby enhancing usability.
-
-![qfhooks - PR review - issue #1](https://github.com/user-attachments/assets/c4694952-cfce-4585-8c08-97709dab7e87)
-
-<details close>
-<summary>Add the following hook configuration to your `.vimrc`</summary>
-<br/>
 
 ```vim
 function! s:openBaseDiffQf(base)
@@ -113,61 +130,57 @@ function! s:openBaseDiffQf(base)
       let parts = split(l:file, '\t\+', 1)
       if len(parts) == 2
         let [l:status, l:filename] = parts
-        call add(l:items, {'filename': l:filename, 'lnum': 1, 'text': 'S:' . l:status})
+        call add(l:items, { 'filename': l:filename, 'lnum': 0, 'text': 'S:' . l:status, 'valid': 1 })
       endif
     endif
   endfor
-  if empty(l:items) | echo 'No files found in diff for base: ' . g:review_base | return | endif
+  if empty(l:items)
+    echo 'No files found in diff for base: ' . g:review_base
+    return
+  endif
   call setqflist([], 'r', {
-    \ 'title': 'review_pr: base' . g:review_base,
-    \ 'context': {g:qfhooks_context_hook_key : 'review_pr'},
+    \ 'context': { g:qfhooks_context_hook_key : 'base_diff_view'},
     \ 'items': l:items,
     \ })
   silent! execute 'QFHooksCopen'
 endfunction
 
-function! HandleOpenBaseDiff()
-  silent! cc
-  silent! execute 'Gvdiffsplit ' . g:review_base
-  silent! wincmd h
-endfunction
-
-function! HandleNextBaseDiff()
+function! HandleNextDiff()
   let l:current_bufnr = bufnr('%')
   for l:win in getwininfo()
     if l:win.tabnr == tabpagenr() && l:win.bufnr != l:current_bufnr && l:win.quickfix == 0
       execute 'bdelete' l:win.bufnr
     endif
   endfor
-  silent! execute 'Gvdiffsplit ' . g:review_base
-  silent! wincmd h
+  silent! execute 'Gvdiffsplit ' . g:review_base | wincmd h
 endfunction
 
 let g:qfhooks_context_hooks = {
-  \ 'review_pr': [{
-  \    'hook': function('HandleNextBaseDiff'),
-  \    'stage': 'after',
-  \    'cmds': ['cprevious', 'cnext', 'cc'],
+  \ 'base_diff_view': [
+  \   {
+  \     'hook': function('HandleNextDiff'),
+  \     'stage': 'after',
+  \     'cmds': ['cprevious', 'cnext', 'cc', 'cfirst', 'clast'],
   \   },
   \   {
-  \    'hook': function('HandleOpenBaseDiff'),
-  \    'stage': 'after',
-  \    'cmds': ['copen'],
-  \   }],
-  \ }
+  \     'hook': 'QFHooksCc',
+  \     'stage': 'after',
+  \     'cmds': ['copen'],
+  \   }
+  \ ]
+\ }
 
-command! -nargs=? ReviewPR call s:openBaseDiffQf(<q-args>)
+command! -nargs=? DiffView call s:openBaseDiffQf(<q-args>)
 ```
 
 </details>
 
-### Yank history
+### Yank History
 
-By integrating with plugins like vim-yoink, you can display your yank history in the Quickfix list and use custom hooks to select and reuse previous yanks effortlessly.
+Display and manage your yank history using the Quickfix list, allowing you to reuse previous yanks effortlessly.
 
-<details close>
+<details>
 <summary>Add the following hook configuration to your `.vimrc`</summary>
-<br/>
 
 ```vim
 " Plug 'kis9a/vim-yoink'
@@ -183,10 +196,13 @@ function! s:yankHistoryQf(open = v:false)
   let l:items = []
   let l:idx = 1
   for l:yank in yoink#getYankHistory()
-    call add(l:items, {'lnum': l:idx, 'text': l:yank['text']})
+    call add(l:items, { 'lnum': l:idx, 'text': l:yank['text'] })
     let l:idx += 1
   endfor
-  if empty(items) | echo 'No yanks in history' | return | endif
+  if empty(l:items)
+    echo 'No yanks in history'
+    return
+  endif
 
   if a:open
     if empty(l:context) || get(l:context, g:qfhooks_context_hook_key, '') !=# 'yank_history'
@@ -196,31 +212,37 @@ function! s:yankHistoryQf(open = v:false)
 
   call setqflist([], 'r', {
     \ 'title': 'yank_history',
-    \ 'context': {g:qfhooks_context_hook_key : 'yank_history'},
+    \ 'context': { g:qfhooks_context_hook_key: 'yank_history' },
     \ 'items': l:items,
     \ })
 
-  if a:open | silent! execute 'QFHooksCopen' | endif
+  if a:open
+    silent! execute 'QFHooksCopen'
+  endif
 endfunction
 
 function! s:yankPrevious()
   let l:yanks = yoink#getYankHistory()
-  if empty(l:yanks) | echo 'No yanks in history' | return | endif
-  if len(l:yanks) < 1 | return | endif
+  if empty(l:yanks)
+    echo 'No yanks in history'
+    return
+  endif
   let l:yanked = l:yanks[1]['text']
   call yoink#manualYank(l:yanked)
   let l:line = substitute(l:yanked, '\n', '\\n', 'g')
-  if len(l:line) > 60 | let l:line = line[: 60] . '...' | endif
+  if len(l:line) > 60
+    let l:line = l:line[:60] . '...'
+  endif
   echo l:line
 endfunction
 
 function! HandleBeforeOpenYank()
   if &filetype ==# 'qf'
-    if exists('g:pos_before_yanekd_qf_open')
-      unlet g:pos_before_yanekd_qf_open
+    if exists('g:pos_before_yank_qf_open')
+      unlet g:pos_before_yank_qf_open
     endif
   else
-    let g:pos_before_yanekd_qf_open = getpos('.')
+    let g:pos_before_yank_qf_open = getpos('.')
   endif
 endfunction
 
@@ -228,30 +250,35 @@ function! HandleAfterOpenYank()
   let l:qf_info = getqflist({'idx': 0, 'items': 1})
   let l:idx = l:qf_info['idx']
   let l:qflist = l:qf_info['items']
-  if empty(l:qflist) | echo "Quickfix list is empty" | return | endif
+  if empty(l:qflist)
+    echo 'Quickfix list is empty'
+    return
+  endif
 
-  let l:yanked = l:qflist[l:idx-1]['text']
+  let l:yanked = l:qflist[l:idx - 1]['text']
   let @+ = l:yanked
-  if &filetype ==# 'qf' |
+  if &filetype ==# 'qf'
     cclose
   else
-    if exists('g:pos_before_yanekd_qf_open')
-      let [_, l:lnum, l:col, _] = g:pos_before_yanekd_qf_open
+    if exists('g:pos_before_yank_qf_open')
+      let [_, l:lnum, l:col, _] = g:pos_before_yank_qf_open
       call cursor(l:lnum, l:col)
     endif
   endif
 endfunction
 
 let g:qfhooks_context_hooks = {
-  \ 'yank_history': [{
-  \    'hook': function('HandleBeforeOpenYank'),
-  \    'stage': 'before',
+  \ 'yank_history': [
+  \   {
+  \     'hook': function('HandleBeforeOpenYank'),
+  \     'stage': 'before',
   \   },
   \   {
-  \    'hook': function('HandleAfterOpenYank'),
-  \    'stage': 'after',
-  \   }],
-  \ }
+  \     'hook': function('HandleAfterOpenYank'),
+  \     'stage': 'after',
+  \   }
+  \ ]
+\ }
 
 command! YankHistoryQf call s:yankHistoryQf(v:true)
 command! YankPrevious call s:yankPrevious()
@@ -260,50 +287,13 @@ nnoremap <silent> sy :YankHistoryQf<CR>
 nnoremap <silent> yp :YankPrevious<CR>
 
 augroup yoink
-  au!
+  autocmd!
   autocmd TextYankPost * call yoink#onYank(copy(v:event)) | call s:yankHistoryQf()
   autocmd VimEnter * call yoink#onVimEnter()
 augroup END
 ```
 
 </details>
-
-## Hooks System
-
-Hooks are triggered **before** or **after** commands run. You can create both **context-based** and **title-based** hooks:
-
-- **Context Hooks**: Triggered by Quickfix or Location List context.
-- **Title Hooks**: Triggered by matching the Quickfix or Location List title.
-
-### Examples of hook variables
-
-```vim
-let g:qfhooks_default_cmds = ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'lnext', 'lprevious', 'll', 'lfirst', 'llast']
-
-let g:qfhooks_context_hooks = {
-\ 'context': [
-\   {
-\     'priority': 1,
-\     'stage': 'after',
-\     'cmds': ['cc', 'cnext', 'cprevious', 'll', 'lnext', 'lprevious'],
-\     'hook': function('HandleFunc')
-\   }
-\ ]}
-```
-
-### Title Hooks Example
-
-```vim
-let g:qfhooks_title_hooks = {
-\ '^title_pattern.*': [
-\   {
-\     'priority': 20,
-\     'stage': 'before',
-\     'cmds': ['cnext', 'cprevious', 'cc', 'cfirst', 'clast', 'copen', 'cwindow', 'cclose', 'lnext', 'lprevious', 'll', 'lfirst', 'llast', 'lopen', 'lwindow', 'lclose'],
-\     'hook': 'RunCommand'
-\   }
-\ ]}
-```
 
 ## License
 
